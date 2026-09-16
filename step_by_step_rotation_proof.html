@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Proof: Center of Rotation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; }
+        canvas { touch-action: none; cursor: crosshair; }
+        
+        .custom-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: #e2e8f0;
+            outline: none;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .custom-slider.amber::-webkit-slider-thumb { background: #f59e0b; }
+        .custom-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        .step-card {
+            transition: all 0.3s ease;
+            opacity: 0.5;
+            border-left: 4px solid transparent;
+        }
+        .step-card.active {
+            opacity: 1;
+            border-left-color: #3b82f6;
+            background-color: #f0fdf4;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .step-card.active-blue { border-left-color: #3b82f6; background-color: #eff6ff; }
+        .step-card.active-purple { border-left-color: #9333ea; background-color: #faf5ff; }
+        .step-card.active-rose { border-left-color: #e11d48; background-color: #fff1f2; }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col text-slate-800">
+
+    <header class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center shadow-sm z-20 relative">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900">Brick by Brick: Finding the Center of Rotation</h1>
+            <p class="text-xs text-slate-500 mt-1">Interactive Locus & Intersection Proof for IB Grade 9</p>
+        </div>
+        <div class="flex gap-4 items-center">
+            <div class="text-sm font-semibold">
+                Rotation Angle: <span id="angleValue" class="text-blue-600 inline-block w-12 text-right">75°</span>
+            </div>
+            <input type="range" id="angleSlider" min="-180" max="180" value="75" class="custom-slider w-48 m-0">
+            <button onclick="resetSim()" class="ml-4 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-sm font-medium transition-colors border border-slate-300">
+                Reset Shape
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <aside class="w-96 bg-white border-r border-slate-200 flex flex-col h-full overflow-y-auto z-10 shadow-lg relative">
+            <div class="p-5 space-y-4">
+                
+                <p class="text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded border border-slate-200">
+                    <strong>Freedom to explore:</strong> Drag the <span class="text-purple-600 font-bold">purple Center (R)</span>, or drag any vertex (<span class="text-blue-600 font-bold">A, B, C</span>) of the original triangle at any time to test the logic.
+                </p>
+
+                <!-- Phase 0 -->
+                <div id="step0" class="step-card active active-blue p-4 rounded border border-slate-200 cursor-pointer" onclick="setPhase(0)">
+                    <h3 class="font-bold text-slate-800 text-sm mb-1">Step 0: The Setup</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        We have an original object (blue) and its rotated image (orange). We know they rotated around some center point <strong>R</strong>, but pretend we don't know where R is yet.
+                    </p>
+                </div>
+
+                <!-- Phase 1 -->
+                <div id="step1" class="step-card p-4 rounded border border-slate-200 cursor-pointer" onclick="setPhase(1)">
+                    <h3 class="font-bold text-slate-800 text-sm mb-1">Step 1: The Distance Rule</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Focus on one point, <strong>A</strong>, and its image <strong>A'</strong>. Because A rotated in a circle around R to get to A', the distance from the center must stay the same. 
+                        <br><br><span class="font-mono bg-white px-1 border rounded text-blue-700">Distance RA = Distance RA'</span>
+                    </p>
+                </div>
+
+                <!-- Phase 2 -->
+                <div id="step2" class="step-card p-4 rounded border border-slate-200 cursor-pointer" onclick="setPhase(2)">
+                    <h3 class="font-bold text-slate-800 text-sm mb-1">Step 2: The Locus Property (Crucial)</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed mb-3">
+                        Draw a chord between A and A'. Then, draw its <strong>perpendicular bisector</strong> (the blue dashed line). 
+                        <br><br>
+                        <strong>The Locus Theorem:</strong> ANY point on this dashed line is equidistant from A and A'. 
+                    </p>
+                    <div class="bg-amber-50 p-3 rounded border border-amber-200 mt-2" onclick="event.stopPropagation()">
+                        <label class="text-xs font-bold text-amber-800 mb-1 block">Test the Theorem: Drag the Locus Point</label>
+                        <input type="range" id="locusSlider" min="-200" max="200" value="0" class="custom-slider amber">
+                        <p class="text-[11px] text-amber-700 leading-tight mt-1">
+                            Notice how the distances from the yellow point to A and A' are ALWAYS perfectly equal, no matter where it is on the line. Since R is also equidistant to A and A' (from Step 1), <strong>R MUST be somewhere on this line.</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Phase 3 -->
+                <div id="step3" class="step-card p-4 rounded border border-slate-200 cursor-pointer" onclick="setPhase(3)">
+                    <h3 class="font-bold text-slate-800 text-sm mb-1">Step 3: The Intersection Proof</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        One line gives us infinite possibilities for where R could be. We need to narrow it down. 
+                        <br><br>
+                        Let's repeat the process for point <strong>B</strong> and <strong>B'</strong>. Their perpendicular bisector (red dashed line) is the locus of all points equidistant from B and B'.
+                    </p>
+                </div>
+
+                <!-- Phase 4 -->
+                <div id="step4" class="step-card p-4 rounded border border-slate-200 cursor-pointer" onclick="setPhase(4)">
+                    <h3 class="font-bold text-slate-800 text-sm mb-1">Step 4: The Unique Solution</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        The Center of Rotation (R) must be on the blue line AND the red line. 
+                        <br><br>
+                        Two non-parallel lines cross at exactly <strong>one unique point</strong>. Mathematically, this intersection is the ONLY point in space equidistant from (A,A') and (B,B') simultaneously. We found the center!
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mt-auto p-4 border-t bg-slate-50 flex justify-between">
+                <button onclick="prevPhase()" class="px-4 py-2 bg-white border border-slate-300 rounded shadow-sm hover:bg-slate-100 text-sm font-medium">&larr; Back</button>
+                <button onclick="nextPhase()" id="nextBtn" class="px-4 py-2 bg-blue-600 text-white rounded shadow-sm hover:bg-blue-700 text-sm font-medium">Next Step &rarr;</button>
+            </div>
+        </aside>
+
+        <div class="flex-1 relative bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] bg-white" id="canvas-container">
+            <canvas id="simCanvas" class="absolute inset-0 w-full h-full"></canvas>
+            <!-- Tooltip -->
+            <div id="tooltip" class="absolute pointer-events-none opacity-0 bg-slate-800 text-white text-xs px-2 py-1 rounded transition-opacity shadow-lg transform -translate-x-1/2 -translate-y-full mt-[-10px] z-30">
+                Drag Me
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+        
+        // UI
+        const angleSlider = document.getElementById('angleSlider');
+        const angleValue = document.getElementById('angleValue');
+        const locusSlider = document.getElementById('locusSlider');
+        const tooltip = document.getElementById('tooltip');
+        const nextBtn = document.getElementById('nextBtn');
+
+        // State
+        let width, height;
+        let dpr = window.devicePixelRatio || 1;
+        let currentPhase = 0;
+        let angleDeg = parseInt(angleSlider.value);
+        let locusT = parseInt(locusSlider.value); // Parameter for point on bisector
+        
+        // Geometry Nodes
+        let nodes = {
+            cor: { x: 0, y: 0, label: 'R', color: '#9333ea', radius: 8, draggable: true }, // Purple
+            a: { x: 0, y: 0, label: 'A', color: '#2563eb', radius: 6, draggable: true }, // Blue
+            b: { x: 0, y: 0, label: 'B', color: '#e11d48', radius: 6, draggable: true }, // Red
+            c: { x: 0, y: 0, label: 'C', color: '#0f766e', radius: 6, draggable: true }  // Teal
+        };
+
+        let draggedNode = null;
+        let hoveredNode = null;
+
+        // Initialize Canvas
+        function initLayout() {
+            const rect = container.getBoundingClientRect();
+            width = rect.width;
+            height = rect.height;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+        }
+
+        // Setup Initial Positions
+        function resetSim() {
+            initLayout();
+            const cx = width / 2;
+            const cy = height / 2;
+            
+            // Offset COR from center
+            nodes.cor.x = cx - 120;
+            nodes.cor.y = cy + 80;
+
+            // Define original triangle
+            nodes.a.x = cx + 50; nodes.a.y = cy - 100;
+            nodes.b.x = cx + 180; nodes.b.y = cy - 20;
+            nodes.c.x = cx + 80; nodes.c.y = cy + 50;
+
+            draw();
+        }
+
+        function rotatePoint(p, center, angleDegrees) {
+            const angleRad = angleDegrees * (Math.PI / 180);
+            const cosA = Math.cos(angleRad);
+            const sinA = Math.sin(angleRad);
+            const dx = p.x - center.x;
+            const dy = p.y - center.y;
+            return {
+                x: dx * cosA - dy * sinA + center.x,
+                y: dx * sinA + dy * cosA + center.y
+            };
+        }
+
+        function getDistance(p1, p2) {
+            return Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2);
+        }
+
+        function getMidpoint(p1, p2) {
+            return { x: (p1.x + p2.x)/2, y: (p1.y + p2.y)/2 };
+        }
+
+        // Returns {px, py} which is a normalized perpendicular vector
+        function getPerpendicularVector(p1, p2) {
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            let px = -dy;
+            let py = dx;
+            const len = Math.sqrt(px*px + py*py);
+            if (len === 0) return {x: 0, y: 1};
+            return {x: px/len, y: py/len};
+        }
+
+        function drawLine(p1, p2, color, dashed = false, width = 2, opacity = 1) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = color;
+            ctx.globalAlpha = opacity;
+            ctx.lineWidth = width;
+            if (dashed) ctx.setLineDash([6, 6]);
+            else ctx.setLineDash([]);
+            ctx.stroke();
+            ctx.setLineDash([]); 
+            ctx.globalAlpha = 1.0;
+        }
+
+        function drawText(text, x, y, color = '#1e293b', align='left', font='14px Inter') {
+            ctx.fillStyle = color;
+            ctx.font = font;
+            ctx.textAlign = align;
+            ctx.fillText(text, x, y);
+            ctx.textAlign = 'left'; // reset
+        }
+
+        function drawTriangle(pA, pB, pC, color, fillColor, labelSuffix = '') {
+            ctx.beginPath();
+            ctx.moveTo(pA.x, pA.y);
+            ctx.lineTo(pB.x, pB.y);
+            ctx.lineTo(pC.x, pC.y);
+            ctx.closePath();
+            
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Vertices
+            const pts = [
+                {p: pA, l: 'A', c: nodes.a.color}, 
+                {p: pB, l: 'B', c: nodes.b.color}, 
+                {p: pC, l: 'C', c: nodes.c.color}
+            ];
+
+            pts.forEach(v => {
+                ctx.beginPath();
+                ctx.arc(v.p.x, v.p.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = v.c;
+                ctx.fill();
+                drawText(v.l + labelSuffix, v.p.x + 8, v.p.y - 8, v.c, 'left', 'bold 14px Inter');
+            });
+        }
+
+        function drawArc(startPoint, centerPoint, angleDegrees, color) {
+            const radius = getDistance(startPoint, centerPoint);
+            const startAngleRad = Math.atan2(startPoint.y - centerPoint.y, startPoint.x - centerPoint.x);
+            const rotRad = angleDegrees * (Math.PI / 180);
+            
+            ctx.beginPath();
+            ctx.arc(centerPoint.x, centerPoint.y, radius, startAngleRad, startAngleRad + rotRad, angleDegrees < 0);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 6]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            const c = nodes.cor;
+            const a = nodes.a;
+            const b = nodes.b;
+            
+            // Calculate rotated points
+            const aPrime = rotatePoint(nodes.a, c, angleDeg);
+            const bPrime = rotatePoint(nodes.b, c, angleDeg);
+            const cPrime = rotatePoint(nodes.c, c, angleDeg);
+
+            // ---------------------------------------------------------
+            // RENDER LOGIC BASED ON PHASE (Brick by Brick)
+            // ---------------------------------------------------------
+            
+            // Phase 1: Distance Rule
+            if (currentPhase >= 1) {
+                // Highlight Arc for A
+                drawArc(a, c, angleDeg, '#94a3b8');
+                // Draw Radii RA and RA'
+                drawLine(c, a, '#3b82f6', true, 2, 0.5); // Blue
+                drawLine(c, aPrime, '#3b82f6', true, 2, 0.5);
+                
+                if (currentPhase === 1) {
+                    const dist = Math.round(getDistance(c, a));
+                    drawText(`RA = ${dist}px`, (c.x + a.x)/2 - 20, (c.y + a.y)/2 - 10, '#2563eb', 'center', 'bold 12px Inter');
+                    drawText(`RA' = ${dist}px`, (c.x + aPrime.x)/2 - 20, (c.y + aPrime.y)/2 + 20, '#2563eb', 'center', 'bold 12px Inter');
+                }
+            }
+
+            // Phase 2: Locus Property (A and A')
+            if (currentPhase >= 2) {
+                const midA = getMidpoint(a, aPrime);
+                const perpA = getPerpendicularVector(a, aPrime);
+                const lineLength = 2000;
+                
+                // Draw Chord AA'
+                drawLine(a, aPrime, '#64748b', false, 1);
+                
+                // Draw Bisector line
+                const p1 = {x: midA.x - perpA.x * lineLength, y: midA.y - perpA.y * lineLength};
+                const p2 = {x: midA.x + perpA.x * lineLength, y: midA.y + perpA.y * lineLength};
+                drawLine(p1, p2, '#3b82f6', true, 2); // Blue dashed
+
+                // Locus Interactive Point (The Theorem in action)
+                if (currentPhase === 2) {
+                    // Calculate exact point based on slider (-200 to +200)
+                    const locusPt = {
+                        x: midA.x + perpA.x * locusT,
+                        y: midA.y + perpA.y * locusT
+                    };
+                    
+                    // Draw lines from locus point to A and A'
+                    drawLine(locusPt, a, '#f59e0b', false, 2);
+                    drawLine(locusPt, aPrime, '#f59e0b', false, 2);
+                    
+                    // Draw locus point (Yellow)
+                    ctx.beginPath();
+                    ctx.arc(locusPt.x, locusPt.y, 8, 0, Math.PI*2);
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.stroke();
+
+                    // Show equal distances
+                    const lDist = Math.round(getDistance(locusPt, a));
+                    drawText(`d = ${lDist}`, (locusPt.x + a.x)/2, (locusPt.y + a.y)/2 - 10, '#b45309', 'center', 'bold 13px Inter');
+                    drawText(`d = ${lDist}`, (locusPt.x + aPrime.x)/2, (locusPt.y + aPrime.y)/2 + 15, '#b45309', 'center', 'bold 13px Inter');
+                    
+                    // Note on R
+                    drawText('R is also on this line!', c.x + 20, c.y + 20, '#9333ea', 'left', 'italic 12px Inter');
+                }
+            }
+
+            // Phase 3 & 4: Intersection (B and B')
+            if (currentPhase >= 3) {
+                const midB = getMidpoint(b, bPrime);
+                const perpB = getPerpendicularVector(b, bPrime);
+                const lineLength = 2000;
+                
+                // Draw Chord BB'
+                drawLine(b, bPrime, '#64748b', false, 1);
+                
+                // Draw Bisector line
+                const p1 = {x: midB.x - perpB.x * lineLength, y: midB.y - perpB.y * lineLength};
+                const p2 = {x: midB.x + perpB.x * lineLength, y: midB.y + perpB.y * lineLength};
+                drawLine(p1, p2, '#e11d48', true, 2); // Red dashed
+            }
+
+            // Highlight exact intersection in Phase 4
+            if (currentPhase === 4) {
+                // Draw glowing circle around R to show it's the intersection
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, 16, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(147, 51, 234, 0.2)';
+                ctx.fill();
+                ctx.strokeStyle = '#9333ea';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([2, 4]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                drawText('Unique Intersection = Center', c.x + 20, c.y + 5, '#9333ea', 'left', 'bold 14px Inter');
+            }
+
+            // ---------------------------------------------------------
+            // ALWAYS DRAW TRIANGLES AND NODES LAST (so they are on top)
+            // ---------------------------------------------------------
+            
+            // Draw original triangle (Light Slate)
+            drawTriangle(nodes.a, nodes.b, nodes.c, '#94a3b8', 'rgba(241, 245, 249, 0.6)'); 
+            // Draw rotated triangle (Orange/Amber)
+            drawTriangle(aPrime, bPrime, cPrime, '#f59e0b', 'rgba(254, 243, 199, 0.5)', "'"); 
+
+            // Draw COR (Purple) - Always visible, but styling changes if we pretend it's "unknown"
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, nodes.cor.radius, 0, Math.PI * 2);
+            ctx.fillStyle = nodes.cor.color;
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            if (hoveredNode) {
+                const hn = nodes[hoveredNode];
+                ctx.beginPath();
+                ctx.arc(hn.x, hn.y, hn.radius + 4, 0, Math.PI * 2);
+                ctx.strokeStyle = hn.color;
+                ctx.globalAlpha = 0.4;
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+            }
+
+            drawText(nodes.cor.label, c.x - 5, c.y - 12, nodes.cor.color, 'center', 'bold 16px Inter');
+        }
+
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX = evt.clientX;
+            let clientY = evt.clientY;
+            if (evt.touches && evt.touches.length > 0) {
+                clientX = evt.touches[0].clientX;
+                clientY = evt.touches[0].clientY;
+            }
+            return { x: (clientX - rect.left), y: (clientY - rect.top) };
+        }
+
+        function hitTest(pos) {
+            // Check nodes in reverse order of importance (COR first)
+            if (getDistance(pos, nodes.cor) < 15) return 'cor';
+            if (getDistance(pos, nodes.a) < 12) return 'a';
+            if (getDistance(pos, nodes.b) < 12) return 'b';
+            if (getDistance(pos, nodes.c) < 12) return 'c';
+            return null;
+        }
+
+        function handleDown(e) {
+            const pos = getMousePos(e);
+            const hit = hitTest(pos);
+            if (hit) {
+                draggedNode = hit;
+                canvas.style.cursor = 'grabbing';
+                tooltip.style.opacity = 0;
+            }
+        }
+
+        function handleMove(e) {
+            const pos = getMousePos(e);
+            
+            if (!draggedNode) {
+                const hit = hitTest(pos);
+                hoveredNode = hit;
+                canvas.style.cursor = hit ? 'grab' : 'crosshair';
+                
+                if (hit) {
+                    tooltip.style.opacity = 1;
+                    tooltip.style.left = e.clientX + 'px';
+                    tooltip.style.top = (e.clientY - 15) + 'px';
+                    tooltip.textContent = hit === 'cor' ? "Drag Center (R)" : `Drag Vertex ${hit.toUpperCase()}`;
+                } else {
+                    tooltip.style.opacity = 0;
+                }
+                draw();
+            }
+
+            if (draggedNode) {
+                nodes[draggedNode].x = pos.x;
+                nodes[draggedNode].y = pos.y;
+                draw();
+            }
+        }
+
+        function handleUp() {
+            draggedNode = null;
+            canvas.style.cursor = hoveredNode ? 'grab' : 'crosshair';
+        }
+
+        // Event Listeners
+        canvas.addEventListener('mousedown', handleDown);
+        canvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleUp);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleDown(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, {passive: false});
+        window.addEventListener('touchend', handleUp);
+
+        // UI Controls
+        angleSlider.addEventListener('input', (e) => {
+            angleDeg = parseInt(e.target.value);
+            angleValue.textContent = angleDeg + '°';
+            draw();
+        });
+
+        locusSlider.addEventListener('input', (e) => {
+            locusT = parseInt(e.target.value);
+            draw();
+        });
+
+        function updateSidebarUI() {
+            for (let i = 0; i <= 4; i++) {
+                const el = document.getElementById(`step${i}`);
+                el.classList.remove('active', 'active-blue', 'active-purple', 'active-rose');
+                if (i === currentPhase) {
+                    let colorClass = 'active-blue';
+                    if (i === 2) colorClass = 'active-blue';
+                    if (i === 3) colorClass = 'active-rose';
+                    if (i === 4) colorClass = 'active-purple';
+                    el.classList.add('active', colorClass);
+                }
+            }
+            nextBtn.textContent = currentPhase === 4 ? "Restart" : "Next Step \u2192";
+        }
+
+        function setPhase(phase) {
+            currentPhase = phase;
+            updateSidebarUI();
+            draw();
+        }
+
+        function nextPhase() {
+            if (currentPhase < 4) {
+                setPhase(currentPhase + 1);
+            } else {
+                setPhase(0);
+            }
+        }
+
+        function prevPhase() {
+            if (currentPhase > 0) setPhase(currentPhase - 1);
+        }
+
+        window.addEventListener('resize', () => { initLayout(); draw(); });
+        window.onload = () => { resetSim(); updateSidebarUI(); };
+
+    </script>
+</body>
+</html>
